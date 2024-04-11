@@ -22,6 +22,9 @@ namespace ColorShadesGenerator
         private string? _rgbColorText;
         private string _createdResources = "";
         private string? _colorName;
+        private int _currentHue;
+        private int _currentSaturation;
+        private Color? _selectedColor;
 
         #endregion
 
@@ -42,18 +45,13 @@ namespace ColorShadesGenerator
         public string? ColorName
         {
             get => _colorName;
-            set
-            {
-                if (value == _colorName) return;
-                _colorName = value;
-                OnPropertyChanged();
-            }
+            set => SetField(ref _colorName, value);
         }
 
         public string CreatedResources
         {
             get => _createdResources;
-            set => SetField(ref _createdResources, value);
+            private set => SetField(ref _createdResources, value);
         }
 
         public DelegateCommand CreateShadesCommand { get; }
@@ -65,10 +63,61 @@ namespace ColorShadesGenerator
             {
                 SetField(ref _rgbColorText, value);
                 CreateShadesCommand.RaiseCanExecuteChanged();
+                UpdateHueAndSaturation();
+            }
+        }
+
+        private void UpdateHueAndSaturation()
+        {
+            if (ConvertFromString(RgbColorText) is not { } color) return;
+
+            var hslColor = HslColor.FromColor(color);
+            
+            SetField(ref _currentHue, (int)(hslColor.H), nameof(CurrentHue));
+            SetField(ref _currentSaturation, (int)(hslColor.S * 100.0), nameof(CurrentSaturation));
+        }
+
+        private void UpdateColor()
+        {
+            if (ConvertFromString(RgbColorText) is not { } color) return;
+
+            var hslColor = HslColor.FromColor(color);
+
+            hslColor = new HslColor(CurrentHue, CurrentSaturation / 100.0, hslColor.L);
+            var rbgColor = hslColor.ToColor();
+
+            SetField(ref _rgbColorText, rbgColor.ToString(), nameof(RgbColorText));
+
+            CreateShadesForColor(hslColor);
+        }
+
+        public int CurrentSaturation
+        {
+            get => _currentSaturation;
+            set
+            {
+                SetField(ref _currentSaturation, value);
+                UpdateColor();
+            }
+        }
+
+        public int CurrentHue
+        {
+            get => _currentHue;
+            set
+            {
+                SetField(ref _currentHue, value);
+                UpdateColor();
             }
         }
 
         public ObservableCollection<Color> Shades { get; } = new();
+
+        public Color? SelectedColor
+        {
+            get => _selectedColor;
+            set => SetField(ref _selectedColor, value);
+        }
 
         #endregion
 
@@ -100,12 +149,24 @@ namespace ColorShadesGenerator
 
             var hslColor = HslColor.FromColor(color);
 
+            CreateShadesForColor(hslColor);
+        }
+
+        private void CreateShadesForColor(HslColor hslColor)
+        {
+            var oldIndex = SelectedColor is null ? -1 : Shades.IndexOf(SelectedColor.Value);
+
             Shades.Clear();
 
             foreach (var shade in Percentages.Select(lum => new HslColor(hslColor.H, hslColor.S, lum).ToColor()))
                 Shades.Add(shade);
 
             CreatedResources = string.Join(Environment.NewLine, Shades.Select(ToColorResourceString));
+
+            if (oldIndex >= 0)
+            {
+                SelectedColor = Shades[oldIndex];
+            }
         }
 
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
