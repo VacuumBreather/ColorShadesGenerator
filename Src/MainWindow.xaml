@@ -1,0 +1,165 @@
+﻿<Window
+    Height="450"
+    Title="MainWindow"
+    Width="800"
+    d:DataContext="{d:DesignInstance local:MainWindow,
+                                     IsDesignTimeCreatable=False}"
+    mc:Ignorable="d"
+    x:Class="ColorShadesGenerator.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:ColorShadesGenerator"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Window.Resources>
+        <local:ColorToBrushConverter x:Key="Converter.ColorToBrush" />
+        <local:ColorToHexStringConverter x:Key="Converter.ColorToHexString" />
+        <local:ColorToRgbStringConverter x:Key="Converter.ColorToRgbString" />
+        <local:ColorToHslStringConverter x:Key="Converter.ColorToHslString" />
+        <local:ColorToLuminanceStringConverter x:Key="Converter.ColorToLuminanceString" />
+        <local:ColorToForegroundBrushConverter x:Key="Converter.ColorToForegroundBrush" />
+    </Window.Resources>
+    <DockPanel>
+        <DockPanel
+            DockPanel.Dock="Top"
+            Margin="5"
+            VerticalAlignment="Top">
+            <TextBlock
+                DockPanel.Dock="Left"
+                Margin="5"
+                Text="RGB Base Color:"
+                VerticalAlignment="Center" />
+            <TextBox
+                HorizontalAlignment="Left"
+                Margin="5"
+                Text="{Binding RgbColorText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                VerticalAlignment="Center"
+                Width="200"
+                x:Name="RgbBaseColor" />
+            <TextBlock
+                DockPanel.Dock="Left"
+                Margin="5"
+                Text="Color Name:"
+                VerticalAlignment="Center" />
+            <TextBox
+                HorizontalAlignment="Left"
+                Margin="5"
+                Text="{Binding ColorName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                VerticalAlignment="Center"
+                Width="200" />
+            <Button
+                Command="{Binding CreateShadesCommand, Mode=OneWay}"
+                Content="Create Shades"
+                DockPanel.Dock="Left"
+                HorizontalAlignment="Left"
+                Margin="5"
+                Padding="5"
+                VerticalAlignment="Top" />
+        </DockPanel>
+        <ItemsControl
+            BorderBrush="Black"
+            BorderThickness="1"
+            DockPanel.Dock="Top"
+            HorizontalAlignment="Center"
+            ItemsSource="{Binding Shades, Mode=OneWay}"
+            VerticalAlignment="Top">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type Color}">
+                    <Border
+                        Background="{Binding Mode=OneWay, Converter={StaticResource Converter.ColorToBrush}}"
+                        Height="100"
+                        HorizontalAlignment="Center"
+                        Width="50" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ListBox
+            DockPanel.Dock="Top"
+            ItemsSource="{Binding Shades, Mode=OneWay}"
+            MinHeight="100"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            VerticalAlignment="Top"
+            x:Name="ShadesListBox">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type Color}">
+                    <Border
+                        Background="{Binding Mode=OneWay, Converter={StaticResource Converter.ColorToBrush}}"
+                        BorderBrush="Black"
+                        BorderThickness="1"
+                        Height="100"
+                        HorizontalAlignment="Center"
+                        Width="100">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{Binding Converter={StaticResource Converter.ColorToForegroundBrush}}"
+                                HorizontalAlignment="Center"
+                                Text="{Binding Converter={StaticResource Converter.ColorToLuminanceString}}" />
+                            <TextBlock
+                                Foreground="{Binding Converter={StaticResource Converter.ColorToForegroundBrush}}"
+                                HorizontalAlignment="Center"
+                                Text="{Binding Converter={StaticResource Converter.ColorToHexString}}" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Grid
+            HorizontalAlignment="Left"
+            Margin="10"
+            VerticalAlignment="Top">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                FontWeight="DemiBold"
+                Grid.Column="0"
+                Grid.Row="0"
+                Text="Hex: " />
+            <TextBlock
+                FontWeight="DemiBold"
+                Grid.Column="0"
+                Grid.Row="1"
+                Text="RGB: " />
+            <TextBlock
+                FontWeight="DemiBold"
+                Grid.Column="0"
+                Grid.Row="2"
+                Text="HSL: " />
+            <TextBox
+                Grid.Column="1"
+                Grid.Row="0"
+                IsReadOnly="True"
+                Text="{Binding SelectedItem, Mode=OneWay, ElementName=ShadesListBox, Converter={StaticResource Converter.ColorToHexString}}" />
+            <TextBox
+                Grid.Column="1"
+                Grid.Row="1"
+                IsReadOnly="True"
+                Text="{Binding SelectedItem, Mode=OneWay, ElementName=ShadesListBox, Converter={StaticResource Converter.ColorToRgbString}}" />
+            <TextBox
+                Grid.Column="1"
+                Grid.Row="2"
+                IsReadOnly="True"
+                Text="{Binding SelectedItem, Mode=OneWay, ElementName=ShadesListBox, Converter={StaticResource Converter.ColorToHslString}}" />
+        </Grid>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Margin="10">
+            <TextBox IsReadOnly="True" Text="{Binding CreatedResources, Mode=OneWay}" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>
